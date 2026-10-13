@@ -1,0 +1,42 @@
+# Render Blueprint: New + > Blueprint, point at your repo (this file must be at the repo root,
+# or set "Root Directory" = backend when creating the service by hand).
+#
+# The database is Neon (Postgres) and uploads go to Neon Object Storage, so there is no
+# `databases:` block here. Every `sync: false` value is typed into the Render dashboard.
+services:
+  - type: web
+    name: ielts-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm run db:migrate:prod && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NODE_ENV              # makes the login cookie `secure`; required in production
+        value: production
+      - key: DATABASE_URL          # Neon connection string
+        sync: false
+      - key: AUTH_SECRET
+        generateValue: true        # copy this value into Netlify's AUTH_SECRET
+      - key: FRONTEND_ORIGIN       # e.g. https://your-site.netlify.app
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4.1
+      # Neon Object Storage (S3-compatible)
+      - key: STORAGE_ENDPOINT      # the AWS_ENDPOINT_URL_S3 value from Neon
+        sync: false
+      - key: STORAGE_BUCKET        # the bucket's name in the Neon Console
+        sync: false
+      - key: STORAGE_ACCESS_KEY_ID # the AWS_ACCESS_KEY_ID value (nak_live_...)
+        sync: false
+      - key: STORAGE_SECRET_ACCESS_KEY # the AWS_SECRET_ACCESS_KEY value (nsk_live_...)
+        sync: false
+      - key: STORAGE_REGION        # must match your Neon project region
+        value: us-east-2
+      - key: SEED_ORG_NAME
+        value: ILEARN Spaces
